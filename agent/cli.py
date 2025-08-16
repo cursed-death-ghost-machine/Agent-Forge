@@ -186,6 +186,38 @@ def list_tools():
     tool_registry.discover_tools()
     show_tools()
 
+@app.command("status")
+def show_status():
+    """Show API key rotation status."""
+    setup_logging()
+    
+    from .core import LLMClient
+    
+    try:
+        llm_client = LLMClient()
+        status = llm_client.get_key_status()
+        
+        console.print(f"\n[bold blue]API Key Rotation Status[/bold blue]")
+        console.print(f"Total Keys: {status['total_keys']}")
+        console.print(f"Available Now: [green]{status['available_keys']}[/green]")
+        console.print(f"Rate Limited: [yellow]{status['rate_limited_keys']}[/yellow]")
+        console.print(f"Disabled: [red]{status['disabled_keys']}[/red]")
+        
+        if status['keys']:
+            console.print("\n[bold]Individual Key Status:[/bold]")
+            for key_info in status['keys']:
+                status_color = "green" if key_info['ready_now'] else "yellow" if key_info['time_until_available'] > 0 else "red"
+                ready_text = "Ready" if key_info['ready_now'] else f"Wait {key_info['time_until_available']:.1f}s"
+                
+                console.print(f"  Key {key_info['key_suffix']}: [{status_color}]{ready_text}[/{status_color}] "
+                             f"(errors: {key_info['error_count']})")
+        else:
+            console.print("[red]No API keys configured![/red]")
+            console.print("Add keys to POLLINATIONS_API_KEYS in your config or environment.")
+            
+    except Exception as e:
+        console.print(f"[red]Error checking status: {e}[/red]")
+
 @app.command()
 def version():
     """Show version information."""

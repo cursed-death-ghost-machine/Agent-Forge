@@ -11,20 +11,30 @@ import requests
 from typing import Dict, Any, Optional, List, Tuple
 from .config import config
 from .tools import tool_registry, tool_dispatcher, ToolError
+from .api_rotation import APIKeyRotationManager
 
 logger = logging.getLogger(__name__)
 
 class LLMClient:
-    """Handles communication with local LLM inference server."""
+    """Handles communication with Pollinations.ai API with key rotation."""
     
     def __init__(self):
         self.base_url = config.llm_api_base_url
         self.model_name = config.llm_model_name
         self.session = requests.Session()
+        
+        # Initialize API key rotation manager
+        api_keys = config.pollinations_api_keys
+        if not api_keys:
+            logger.warning("No Pollinations API keys configured. Add keys to POLLINATIONS_API_KEYS.")
+            logger.info("You can add multiple keys separated by commas for rate limit rotation.")
+        
+        self.key_manager = APIKeyRotationManager(api_keys, rate_limit_seconds=15.0)
+        logger.info(f"Initialized with {len(api_keys)} API keys for rotation")
     
     def chat_completion(self, messages: List[Dict[str, str]]) -> str:
         """
-        Send chat completion request to LLM.
+        Send chat completion request to Pollinations.ai with API key rotation.
         
         Args:
             messages: List of message dictionaries with 'role' and 'content'
@@ -32,6 +42,11 @@ class LLMClient:
         Returns:
             LLM response text
         """
+        # Get an available API key (with rate limiting)
+        api_key = self.key_manager.wait_for_available_key(max_wait_seconds=30.0)
+        if not api_key:
+            raise Exception("No API keys available. All keys are rate limited or disabled.")
+        
         try:
             # Construct request payload (OpenAI-compatible format)
             payload = {
@@ -41,28 +56,50 @@ class LLMClient:
                 "temperature": 0.7
             }
             
-            # Send request to LLM server
+            # Set up headers with API key
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            # Send request to Pollinations.ai
             response = self.session.post(
                 f"{self.base_url}/v1/chat/completions",
                 json=payload,
-                timeout=30
+                headers=headers,
+                timeout=60  # Increased timeout for external API
             )
+            
+            # Handle rate limiting specifically
+            if response.status_code == 429:
+                logger.warning(f"Rate limit hit for API key ending in ...{api_key[-4:]}")
+                self.key_manager.mark_key_error(api_key, disable_temporarily=False)
+                raise Exception("Rate limit exceeded. Try again in a moment.")
             
             response.raise_for_status()
             result = response.json()
             
             # Extract response content
             if 'choices' in result and len(result['choices']) > 0:
-                return result['choices'][0]['message']['content']
+                content = result['choices'][0]['message']['content']
+                logger.debug(f"Successfully got response using API key ...{api_key[-4:]}")
+                return content
             else:
-                raise Exception("Invalid response format from LLM")
+                raise Exception("Invalid response format from Pollinations.ai")
                 
         except requests.exceptions.RequestException as e:
-            logger.error(f"LLM request failed: {e}")
-            raise Exception(f"Failed to communicate with LLM: {e}")
+            logger.error(f"Pollinations.ai request failed: {e}")
+            self.key_manager.mark_key_error(api_key, disable_temporarily=False)
+            raise Exception(f"Failed to communicate with Pollinations.ai: {e}")
         except Exception as e:
             logger.error(f"LLM processing error: {e}")
+            if "rate limit" not in str(e).lower():
+                self.key_manager.mark_key_error(api_key, disable_temporarily=False)
             raise
+    
+    def get_key_status(self) -> dict:
+        """Get current status of API key rotation."""
+        return self.key_manager.get_status()
 
 class AICore:
     """Central orchestration for AI agent functionality."""

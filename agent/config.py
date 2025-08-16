@@ -8,7 +8,7 @@ with environment variables taking precedence.
 import os
 import toml
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from dotenv import load_dotenv
 
 # Load environment variables from .env file if it exists
@@ -44,6 +44,7 @@ class Config:
             'LLM_MODEL_NAME': os.getenv('LLM_MODEL_NAME'),
             'TOOLS_DIRECTORY_PATH': os.getenv('TOOLS_DIRECTORY_PATH'),
             'LOG_LEVEL': os.getenv('LOG_LEVEL'),
+            'POLLINATIONS_API_KEYS': os.getenv('POLLINATIONS_API_KEYS'),
         }
         
         for key, value in env_overrides.items():
@@ -57,12 +58,22 @@ class Config:
     @property
     def llm_api_base_url(self) -> str:
         """LLM API base URL."""
-        return self.get('LLM_API_BASE_URL', 'http://localhost:11434')
+        return self.get('LLM_API_BASE_URL', 'https://text.pollinations.ai/openai')
     
     @property
     def llm_model_name(self) -> str:
         """LLM model name."""
-        return self.get('LLM_MODEL_NAME', 'llama3.2')
+        return self.get('LLM_MODEL_NAME', 'openai')
+    
+    @property
+    def pollinations_api_keys(self) -> List[str]:
+        """List of Pollinations API keys for rotation."""
+        keys_str = self.get('POLLINATIONS_API_KEYS', '')
+        if keys_str:
+            # Support both comma-separated and newline-separated keys
+            keys = [key.strip() for key in keys_str.replace('\n', ',').split(',') if key.strip()]
+            return keys
+        return []
     
     @property
     def tools_directory_path(self) -> str:

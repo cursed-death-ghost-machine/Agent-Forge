@@ -4,19 +4,20 @@ A bare-bones CLI AI agent designed for easy extensibility through Python tools. 
 
 ## ✨ Features
 
-- **Conversational AI**: Powered by local LLMs (Ollama, LocalAI, etc.)
+- **Conversational AI**: Powered by Pollinations.ai with intelligent API key rotation
+- **Rate Limit Management**: Automatic rotation of multiple API keys to avoid rate limits
 - **Dynamic Tool Discovery**: Automatically discovers and loads Python tools
 - **Rich CLI Experience**: Interactive interface with history, auto-completion, and beautiful formatting
 - **Easy Extensibility**: Simple `@tool` decorator for creating new capabilities
 - **Robust Validation**: Pydantic-powered argument validation for tools
-- **Local & Private**: Runs entirely on your machine with local LLMs
+- **Continuous Operation**: Smart key rotation allows uninterrupted usage
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Python 3.8+
-- A local LLM server (Ollama recommended)
+- Pollinations.ai API keys (multiple recommended for rate limit avoidance)
 
 ### Installation
 
@@ -37,11 +38,11 @@ A bare-bones CLI AI agent designed for easy extensibility through Python tools. 
    pip install -r requirements.txt
    ```
 
-4. **Set up LLM server** (using Ollama):
+4. **Configure API Keys**:
    ```bash
-   # Install Ollama (see https://ollama.ai)
-   ollama pull llama3.2  # or your preferred model
-   ollama serve
+   # Edit config.toml and add your Pollinations.ai API keys
+   # Add multiple keys separated by commas for rate limit rotation
+   POLLINATIONS_API_KEYS = "key1,key2,key3,key4"
    ```
 
 5. **Configure Chimera** (optional):
@@ -65,10 +66,21 @@ Chimera uses a layered configuration system:
 
 ### Key Settings
 
-- `LLM_API_BASE_URL`: LLM server endpoint (default: `http://localhost:11434`)
-- `LLM_MODEL_NAME`: Model to use (default: `llama3.2`)
+- `LLM_API_BASE_URL`: Pollinations.ai endpoint (default: `https://text.pollinations.ai/openai`)
+- `LLM_MODEL_NAME`: Model to use (default: `openai`)
+- `POLLINATIONS_API_KEYS`: Comma-separated API keys for rotation
 - `TOOLS_DIRECTORY_PATH`: Where to find tools (default: `tools`)
 - `LOG_LEVEL`: Logging verbosity (default: `INFO`)
+
+### API Key Rotation
+
+Chimera automatically rotates through multiple API keys to avoid Pollinations.ai's rate limit (1 call per 15 seconds per key). 
+
+**Recommended Setup:**
+- Add 4+ API keys for smooth continuous operation
+- Keys are rotated automatically with intelligent rate limiting
+- Failed keys are temporarily disabled and re-enabled automatically
+- Use `chimera status` to monitor key rotation status
 
 ## 🔧 Creating Custom Tools
 
@@ -133,8 +145,16 @@ def calculate(operation: str, a: float, b: float) -> str:
 - **Regular chat**: Just type your message
 - **help**: Show help information
 - **tools**: List available tools
+- **status**: Show API key rotation status
 - **clear**: Clear conversation history
 - **exit**: Quit the application
+
+### CLI Commands
+
+- `python -m agent.cli` - Start interactive chat
+- `python -m agent.cli tools` - List available tools  
+- `python -m agent.cli status` - Show API key rotation status
+- `python -m agent.cli version` - Show version info
 
 ### Example Interactions
 
@@ -178,12 +198,17 @@ chimera-cli/
 
 ### Common Issues
 
-1. **LLM Connection Failed**:
-   - Ensure your LLM server is running
-   - Check `LLM_API_BASE_URL` in configuration
-   - Verify the model is available
+1. **API Connection Failed**:
+   - Verify your Pollinations.ai API keys are valid
+   - Check `POLLINATIONS_API_KEYS` in configuration
+   - Use `chimera status` to check key rotation status
 
-2. **Tools Not Loading**:
+2. **Rate Limit Errors**:
+   - Add more API keys to `POLLINATIONS_API_KEYS`
+   - Each key allows 1 call per 15 seconds
+   - Recommended: 4+ keys for continuous operation
+
+3. **Tools Not Loading**:
    - Check tools are in the correct directory
    - Ensure Python files have `@tool` decorator
    - Look for syntax errors in tool files
@@ -214,6 +239,7 @@ This project is open source. See LICENSE file for details.
 - [Rich](https://rich.readthedocs.io/) for beautiful terminal output
 - [Pydantic](https://pydantic-docs.helpmanual.io/) for data validation
 - [Prompt Toolkit](https://python-prompt-toolkit.readthedocs.io/) for interactive features
+- Powered by [Pollinations.ai](https://pollinations.ai/) for AI inference
 
 ---
 
