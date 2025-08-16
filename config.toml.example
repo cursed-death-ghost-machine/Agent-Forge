@@ -1,0 +1,16 @@
+# Chimera CLI Configuration File
+# Copy this to config.toml and modify as needed
+
+# LLM Configuration - Pollinations.ai
+LLM_API_BASE_URL = "https://text.pollinations.ai/openai"
+LLM_MODEL_NAME = "openai"
+
+# Pollinations.ai API Keys (comma-separated for rotation)
+# Add multiple keys to avoid rate limits (1 call per 15 seconds per key)
+POLLINATIONS_API_KEYS = "your-api-key-1,your-api-key-2,your-api-key-3"
+
+# Tool Configuration  
+TOOLS_DIRECTORY_PATH = "tools"
+
+# Logging Configuration
+LOG_LEVEL = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
