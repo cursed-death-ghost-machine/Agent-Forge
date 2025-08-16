@@ -125,8 +125,14 @@ class APIKeyRotationManager:
                         if wait_time > 0 and wait_time < min_wait_time:
                             min_wait_time = wait_time
                 
-                # Sleep for the minimum wait time, capped at 0.5s
-                sleep_time = min(min_wait_time, 0.5) if min_wait_time != float('inf') else 0.5
+                # Sleep for optimal time - longer waits for longer delays
+                if min_wait_time != float('inf'):
+                    if min_wait_time < 2:
+                        sleep_time = min_wait_time
+                    else:
+                        sleep_time = min(2.0, min_wait_time)
+                else:
+                    sleep_time = 0.5
                 time.sleep(sleep_time)
         
         logger.error(f"Timeout waiting for available API key after {max_wait_seconds}s")
