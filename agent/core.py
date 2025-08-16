@@ -82,6 +82,8 @@ class LLMClient:
             # Extract response content
             if 'choices' in result and len(result['choices']) > 0:
                 content = result['choices'][0]['message']['content']
+                # Mark key as used only after successful response
+                self.key_manager.mark_key_used(api_key)
                 logger.debug(f"Successfully got response using API key ...{api_key[-4:]}")
                 return content
             else:

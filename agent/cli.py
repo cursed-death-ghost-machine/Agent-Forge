@@ -79,6 +79,7 @@ async def async_chat():
     # Set up prompt session with history and completion
     history_file = Path.home() / ".chimera_history"
     completer = ToolCompleter()
+    completer.update_completions()  # Refresh after tool discovery
     
     session = PromptSession(
         history=FileHistory(str(history_file)),
@@ -206,8 +207,15 @@ def show_status():
         if status['keys']:
             console.print("\n[bold]Individual Key Status:[/bold]")
             for key_info in status['keys']:
-                status_color = "green" if key_info['ready_now'] else "yellow" if key_info['time_until_available'] > 0 else "red"
-                ready_text = "Ready" if key_info['ready_now'] else f"Wait {key_info['time_until_available']:.1f}s"
+                if not key_info['is_available']:
+                    status_color = "red"
+                    ready_text = "Disabled"
+                elif key_info['ready_now']:
+                    status_color = "green"
+                    ready_text = "Ready"
+                else:
+                    status_color = "yellow"
+                    ready_text = f"Wait {key_info['time_until_available']:.1f}s"
                 
                 console.print(f"  Key {key_info['key_suffix']}: [{status_color}]{ready_text}[/{status_color}] "
                              f"(errors: {key_info['error_count']})")

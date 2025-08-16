@@ -59,7 +59,8 @@ class APIKeyRotationManager:
             current_time = time.time()
             
             # First, try to find a key that's ready to use
-            for _ in range(len(self.key_states)):
+            start_index = self.current_index
+            for attempt in range(len(self.key_states)):
                 key_state = self.key_states[self.current_index]
                 
                 # Check if this key is available (not rate limited)
@@ -68,9 +69,9 @@ class APIKeyRotationManager:
                 if (key_state.is_available and 
                     time_since_last_use >= self.rate_limit_seconds):
                     
-                    # Mark this key as used
-                    key_state.last_used = current_time
+                    # Don't mark as used yet - wait until actual API call
                     selected_key = key_state.key
+                    selected_index = self.current_index
                     
                     # Move to next key for next request
                     self.current_index = (self.current_index + 1) % len(self.key_states)
@@ -114,11 +115,37 @@ class APIKeyRotationManager:
             if key:
                 return key
             
-            # Wait a short time before trying again
-            time.sleep(0.5)
+            # Calculate optimal wait time instead of fixed 0.5s
+            with self.lock:
+                current_time = time.time()
+                min_wait_time = float('inf')
+                for key_state in self.key_states:
+                    if key_state.is_available:
+                        wait_time = self.rate_limit_seconds - (current_time - key_state.last_used)
+                        if wait_time > 0 and wait_time < min_wait_time:
+                            min_wait_time = wait_time
+                
+                # Sleep for the minimum wait time, capped at 0.5s
+                sleep_time = min(min_wait_time, 0.5) if min_wait_time != float('inf') else 0.5
+                time.sleep(sleep_time)
         
         logger.error(f"Timeout waiting for available API key after {max_wait_seconds}s")
         return None
+    
+    def mark_key_used(self, api_key: str):
+        """
+        Mark an API key as used (set last_used timestamp).
+        
+        Args:
+            api_key: The API key that was successfully used
+        """
+        with self.lock:
+            current_time = time.time()
+            for key_state in self.key_states:
+                if key_state.key == api_key:
+                    key_state.last_used = current_time
+                    logger.debug(f"Marked API key ending in ...{api_key[-4:]} as used")
+                    break
     
     def mark_key_error(self, api_key: str, disable_temporarily: bool = False):
         """
