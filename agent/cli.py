@@ -99,7 +99,7 @@ async def async_chat():
     while True:
         try:
             # Get user input
-            user_input = session.prompt("🔮 You: ", style="bold blue")
+            user_input = session.prompt("🔮 You: ")
             
             if not user_input.strip():
                 continue
@@ -179,8 +179,8 @@ def show_tools():
     
     console.print(Panel(tools_text, title="Tools", border_style="magenta"))
 
-@app.command()
-def tools():
+@app.command("tools")
+def list_tools():
     """List available tools."""
     setup_logging()
     tool_registry.discover_tools()
