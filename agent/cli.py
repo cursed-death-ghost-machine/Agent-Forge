@@ -166,18 +166,16 @@ See the README.md for detailed instructions.
 
 def show_tools():
     """Display available tools."""
-    tool_names = tool_registry.get_tool_names()
+    tool_manifest = tool_registry.get_tool_manifest()
     
-    if not tool_names:
+    if not tool_manifest:
         console.print("[yellow]No tools available. Add tools to the 'tools' directory.[/yellow]")
         return
     
     tools_text = "[bold blue]Available Tools:[/bold blue]\n\n"
     
-    from .tools import TOOL_REGISTRY
-    for tool_name in tool_names:
-        tool_info = TOOL_REGISTRY[tool_name]
-        tools_text += f"• [bold]{tool_name}[/bold]: {tool_info['description']}\n"
+    for tool_info in tool_manifest:
+        tools_text += f"• [bold]{tool_info['name']}[/bold]: {tool_info['description']}\n"
     
     console.print(Panel(tools_text, title="Tools", border_style="magenta"))
 

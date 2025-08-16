@@ -80,7 +80,7 @@ class ToolRegistry:
         # Clear existing registry (only tools loaded from files)
         # Keep any programmatically registered tools
         file_loaded_tools = [name for name, info in TOOL_REGISTRY.items() 
-                           if hasattr(info.get('callable'), '__module__') 
+                           if info.get('callable') and hasattr(info.get('callable'), '__module__') 
                            and info['callable'].__module__.startswith('tools.')]
         for tool_name in file_loaded_tools:
             TOOL_REGISTRY.pop(tool_name, None)
