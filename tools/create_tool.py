@@ -84,7 +84,13 @@ def generate_tool_code(tool_name: str, tool_description: str, functionality: str
                         param_type = param_info.get('type', 'str')
                         param_desc = param_info.get('description', f'Parameter {param_name}')
                         required = param_info.get('required', True)
-                        default = param_info.get('default', '...' if required else 'None')
+                        default_val = param_info.get('default', '...' if required else None)
+                        if default_val == '...':
+                            default = '...'
+                        elif default_val is None:
+                            default = 'None'
+                        else:
+                            default = repr(default_val)  # Properly quote strings and other values
                     else:
                         param_type = 'str'
                         param_desc = str(param_info)
@@ -95,6 +101,8 @@ def generate_tool_code(tool_name: str, tool_description: str, functionality: str
                     
                     if required and default == '...':
                         function_params.append(f'{param_name}: {param_type}')
+                    elif default == 'None':
+                        function_params.append(f'{param_name}: {param_type} = None')
                     else:
                         function_params.append(f'{param_name}: {param_type} = {default}')
                         

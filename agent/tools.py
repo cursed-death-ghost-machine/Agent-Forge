@@ -87,7 +87,10 @@ class ToolRegistry:
         
         # Scan for Python files in tools directory
         for tool_file in tools_path.glob("*.py"):
-            if tool_file.name.startswith("__"):
+            if (tool_file.name.startswith("__") or 
+                tool_file.name.endswith("_backup.py") or
+                tool_file.name.endswith("_deleted_backup.py") or
+                tool_file.name.startswith("test_")):
                 continue
                 
             try:

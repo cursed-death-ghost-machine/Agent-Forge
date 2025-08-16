@@ -129,3 +129,6 @@ dmypy.json
 
 # Chimera CLI specific
 .chimera_history
+tools/*_backup.py
+tools/*_deleted_backup.py
+tools/test_*.py
