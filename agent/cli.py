@@ -79,6 +79,7 @@ async def async_chat():
     # Set up prompt session with history and completion
     history_file = Path.home() / ".chimera_history"
     completer = ToolCompleter()
+    completer.update_completions()  # Refresh after tool discovery
     
     session = PromptSession(
         history=FileHistory(str(history_file)),

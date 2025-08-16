@@ -21,7 +21,7 @@ class LLMClient:
         self.model_name = config.llm_model_name
         self.session = requests.Session()
     
-    async def chat_completion(self, messages: List[Dict[str, str]]) -> str:
+    def chat_completion(self, messages: List[Dict[str, str]]) -> str:
         """
         Send chat completion request to LLM.
         
@@ -156,7 +156,7 @@ Be helpful, accurate, and concise in your responses."""
             ] + self.conversation_history
             
             # Get LLM response
-            llm_response = await self.llm_client.chat_completion(messages)
+            llm_response = await asyncio.to_thread(self.llm_client.chat_completion, messages)
             
             # Parse response for tool calls
             natural_response, tool_call = self._parse_llm_response(llm_response)
@@ -190,7 +190,7 @@ Be helpful, accurate, and concise in your responses."""
                         {"role": "system", "content": "You are Chimera, a helpful AI assistant. The user has provided you with tool results. Respond naturally based on the results."}
                     ] + self.conversation_history
                     
-                    final_response = await self.llm_client.chat_completion(messages)
+                    final_response = await asyncio.to_thread(self.llm_client.chat_completion, messages)
                     
                     # Add final response to history
                     self.conversation_history.append({

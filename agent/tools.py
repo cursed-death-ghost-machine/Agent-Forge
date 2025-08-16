@@ -11,7 +11,6 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Callable, Type
 from pydantic import BaseModel, ValidationError, create_model
-from functools import wraps
 
 from .config import config
 
@@ -62,11 +61,7 @@ def tool(name: str, description: str, args_model: Optional[Type[BaseModel]] = No
         
         logger.debug(f"Registered tool: {name}")
         
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-        
-        return wrapper
+        return func
     
     return decorator
 
@@ -82,8 +77,13 @@ class ToolRegistry:
             logger.warning(f"Tools directory not found: {tools_path}")
             return
         
-        # Clear existing registry
-        TOOL_REGISTRY.clear()
+        # Clear existing registry (only tools loaded from files)
+        # Keep any programmatically registered tools
+        file_loaded_tools = [name for name, info in TOOL_REGISTRY.items() 
+                           if hasattr(info.get('callable'), '__module__') 
+                           and info['callable'].__module__.startswith('tools.')]
+        for tool_name in file_loaded_tools:
+            TOOL_REGISTRY.pop(tool_name, None)
         
         # Scan for Python files in tools directory
         for tool_file in tools_path.glob("*.py"):
