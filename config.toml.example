@@ -1,0 +1,12 @@
+# Chimera CLI Configuration File
+# Copy this to config.toml and modify as needed
+
+# LLM Configuration
+LLM_API_BASE_URL = "http://localhost:11434"  # Ollama default
+LLM_MODEL_NAME = "llama3.2"
+
+# Tool Configuration  
+TOOLS_DIRECTORY_PATH = "tools"
+
+# Logging Configuration
+LOG_LEVEL = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
