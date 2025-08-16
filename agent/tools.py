@@ -93,7 +93,7 @@ class ToolRegistry:
             try:
                 # Load module dynamically
                 spec = importlib.util.spec_from_file_location(
-                    tool_file.stem, tool_file
+                    f"tools.{tool_file.stem}", tool_file
                 )
                 if spec and spec.loader:
                     module = importlib.util.module_from_spec(spec)

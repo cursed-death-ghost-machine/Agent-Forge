@@ -4,10 +4,11 @@ AI Core for Chimera CLI.
 Handles LLM communication, prompt construction, and response parsing.
 """
 
+import asyncio
 import json
 import logging
 import requests
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from .config import config
 from .tools import tool_registry, tool_dispatcher, ToolError
 
@@ -100,7 +101,7 @@ Be helpful, accurate, and concise in your responses."""
         
         return system_prompt
     
-    def _parse_llm_response(self, response: str) -> tuple[Optional[str], Optional[Dict[str, Any]]]:
+    def _parse_llm_response(self, response: str) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
         """
         Parse LLM response to detect tool calls.
         
