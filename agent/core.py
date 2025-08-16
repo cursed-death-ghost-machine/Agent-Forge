@@ -73,6 +73,8 @@ class LLMClient:
             # Handle rate limiting specifically
             if response.status_code == 429:
                 logger.warning(f"Rate limit hit for API key ending in ...{api_key[-4:]}")
+                # Mark key as used to enforce cooldown period, then mark error for stats
+                self.key_manager.mark_key_used(api_key)
                 self.key_manager.mark_key_error(api_key, disable_temporarily=False)
                 raise Exception("Rate limit exceeded. Try again in a moment.")
             
@@ -91,11 +93,15 @@ class LLMClient:
                 
         except requests.exceptions.RequestException as e:
             logger.error(f"Pollinations.ai request failed: {e}")
+            # For network errors, apply brief cooldown to avoid hammering the same key
+            self.key_manager.mark_key_used(api_key)
             self.key_manager.mark_key_error(api_key, disable_temporarily=False)
             raise Exception(f"Failed to communicate with Pollinations.ai: {e}")
         except Exception as e:
             logger.error(f"LLM processing error: {e}")
             if "rate limit" not in str(e).lower():
+                # For other errors, also apply brief cooldown
+                self.key_manager.mark_key_used(api_key)
                 self.key_manager.mark_key_error(api_key, disable_temporarily=False)
             raise
     
